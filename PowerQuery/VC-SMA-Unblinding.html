@@ -199,7 +199,7 @@
 <span class="c">// Blinded only if the flag is "1"; blank or anything else counts as unblinded</span>
 is_blinded = (v) <span class="k">as logical</span> =&gt; Text.Trim(Text.From(v ?? "")) = "1",
 
-<span class="c">// Names with at least one investment that has no blinding requirement (ignores blank names)</span>
+<span class="c">// Aliases with at least one investment that has no blinding requirement (ignores blank names)</span>
 unblinded_aliases = List.Buffer(
     List.Distinct(
         List.Transform(
@@ -211,21 +211,14 @@ unblinded_aliases = List.Buffer(
     )
 ),
 
-<span class="c">// Compute the final flag per row as a new column (blinded rows whose name is public become "0")</span>
-alias_flag = Table.AddColumn(
+<span class="c">// Unblind blinded rows whose name is in that list</span>
+alias_final = Table.ReplaceValue(
     #"Renamed Columns",
-    "Client Blind in QR Final",
-    each if is_blinded([Client Blind in QR])
-              and List.Contains(unblinded_aliases, Text.Lower(Text.Trim([Fund Name Final] ?? "")))
-         then "0"
-         else Text.From([Client Blind in QR] ?? ""),
-    type text
-),
-
-<span class="c">// Swap the new flag in for the original</span>
-alias_final = Table.RenameColumns(
-    Table.RemoveColumns(alias_flag, {"Client Blind in QR"}),
-    {{"Client Blind in QR Final", "Client Blind in QR"}}
+    each [Client Blind in QR],
+    each if is_blinded([Client Blind in QR]) and List.Contains(unblinded_aliases, Text.Lower(Text.Trim([Fund Name Final] ?? "")))
+         then "0" else Text.From([Client Blind in QR]),
+    Replacer.ReplaceValue,
+    {"Client Blind in QR"}
 ),
 <span class="c">// ===== END ALIAS LOGIC =====</span>
 
@@ -244,8 +237,8 @@ in
     <dd>One definition of "blinded", used three times. It handles the flag arriving as 1 or "1", with spaces or nulls.</dd>
     <dt><code>unblinded_aliases</code></dt>
     <dd>The list of public names. <code>List.Buffer</code> stops Power Query from rebuilding the list for every row. The blank-name check keeps empty names from unblinding every row that also has an empty name.</dd>
-    <dt><code>alias_flag</code> and <code>alias_final</code></dt>
-    <dd>Work out the final flag for each row in a new column, then replace the original flag with it. <code>Table.ReplaceValue</code> is not used because it cannot look at other columns in the same row. The result is always text, so 0 and "0" never mix. The flag column moves to the end of the table.</dd>
+    <dt><code>alias_final</code></dt>
+    <dd>Flips the flag to "0" for matching rows. <code>Text.From</code> keeps the column all text, so 0 and "0" never mix.</dd>
     <dt>Last step</dt>
     <dd>Builds <code>Anonymized Fund Name Final</code> from the updated flag, so it has to run after the flag changes.</dd>
   </dl>
@@ -275,7 +268,7 @@ in
     <dt>The "i" icons next to steps</dt>
     <dd>These are the <code>//</code> comments appearing as step descriptions. They are not warnings.</dd>
     <dt>Changing which column groups the names</dt>
-    <dd>Replace <code>Fund Name Final</code> in <code>unblinded_aliases</code> and <code>alias_flag</code> with the new column.</dd>
+    <dd>Replace <code>Fund Name Final</code> in <code>unblinded_aliases</code> and <code>alias_final</code> with the new column.</dd>
   </dl>
 </section>
 
@@ -368,4 +361,4 @@ in
 })();
 </script>
 </body>
-</html>
+</html> 
