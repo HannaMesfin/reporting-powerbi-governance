@@ -11,4 +11,4 @@ Treats blank, 0, and other values as having no blinding requirement.
 Matches Fund Name Final without regard to case or surrounding spaces.
 Keeps unmatched flagged investments confidential.
 Removes the need to maintain a hardcoded replacement list.
-[View the full documentation and interactive example](./VC-SMA-Unblinding.html)
+[View the full documentation and interactive example](https://hannamesfin.github.io/reporting-powerbi-governance/PowerQuery/VC-SMA-Unblinding.html)
